@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "cuid",
         "ecommerce",
         "Inngest",
         "jeema",
@@ -9,5 +10,5 @@
         "turbopack",
         "Updation"
     ],
-    "prisma.pinToPrisma6": true
+    "prisma.pinToPrisma6": false
 }

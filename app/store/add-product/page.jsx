@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast"
 import { useAuth } from "@/clerk/nextjs"
 import axios from "axios"
 
+
 export default function StoreAddProduct() {
 
     const categories = ['Electronics', 'Clothing', 'Home & Kitchen', 'Beauty & Health', 'Toys & Games', 'Sports & Outdoors', 'Books & Media', 'Food & Drink', 'Hobbies & Crafts', 'Others']
@@ -19,11 +20,58 @@ export default function StoreAddProduct() {
         category: "",
     })
     const [loading, setLoading] = useState(false)
+     const [aiUsed, setAiUsed] = useState(false)
+
+
     const {getToken} = useAuth()
 
 
     const onChangeHandler = (e) => {
         setProductInfo({ ...productInfo, [e.target.name]: e.target.value })
+    }
+
+    const handleImageUpload=async (key, file) => {
+        setImages(prev=>({...prev, [key]:file}))
+        if(key== "1" && file && !aiUsed){
+            //convert the uploaded  image into a converted image
+            const reader=new FileReader()
+            reader.readAsDataURL(file)
+            reader.onloadend=async () => {
+                const base64String = reader.result.split(",")[1]
+                const mimeType = file.type
+                const token = await getToken()
+
+                //make the api call
+                try {
+                    await toast.promise(
+                        axios.post('/api/store/ai',{base64Image: base64String, mimeType},{
+                            headers:{Authorization: `Bearer ${token}`}
+                        }),
+                        {
+                            loading:"Analyzing image with AI....",
+                            success: ()=>{
+                                const data = res.data
+                                if(data.name && data.description){
+                                    setProductInfo(prev =>({
+                                        ...prev,
+                                        name:data.name,
+                                        description:data.description
+                                    }))
+                                    setAiUsed(true)
+                                    return "AI filled product info"
+                                }
+                                return "AI could not analyze the image"
+                            },
+                            error:(err)=> err?.response?.data?.error || err.message
+                        }
+                    )
+                } catch (error) {
+                    console.error(error)
+                }
+                
+            }
+        }
+        
     }
 
     const onSubmitHandler = async (e) => {
@@ -45,7 +93,7 @@ export default function StoreAddProduct() {
             formData.append("price", productInfo.price)
             formData.append("category", productInfo.category)
 
-            //adding imges to form data
+            //adding images to form data
             Object.keys(images).forEach((key) => {
                 if (images[key]) {
                     formData.append("images", images[key])
@@ -90,7 +138,9 @@ export default function StoreAddProduct() {
                 {Object.keys(images).map((key) => (
                     <label key={key} htmlFor={`images${key}`}>
                         <Image width={300} height={300} className='h-15 w-auto border border-slate-200 rounded cursor-pointer' src={images[key] ? URL.createObjectURL(images[key]) : assets.upload_area} alt={images[key] ? `Product image ${key} preview` : 'Upload placeholder'} />
-                        <input type="file" accept='image/*' id={`images${key}`} onChange={e => setImages({ ...images, [key]: e.target.files[0] })} hidden />
+                        <input type="file" accept='image/*' id={`images${key}`}
+                         onChange={e => handleImageUpload(KeyboardEvent, e.target.files[0])}
+                          hidden />
                     </label>
                 ))}
             </div>
@@ -107,11 +157,11 @@ export default function StoreAddProduct() {
 
             <div className="flex gap-5">
                 <label htmlFor="" className="flex flex-col gap-2 ">
-                    Actual Price ($)
+                    Actual Price (GHS)
                     <input type="number" name="mrp" onChange={onChangeHandler} value={productInfo.mrp} placeholder="0" rows={5} className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
                 </label>
                 <label htmlFor="" className="flex flex-col gap-2 ">
-                    Offer Price ($)
+                    Offer Price (GHS)
                     <input type="number" name="price" onChange={onChangeHandler} value={productInfo.price} placeholder="0" rows={5} className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
                 </label>
             </div>
