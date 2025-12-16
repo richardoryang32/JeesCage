@@ -79,6 +79,4 @@ export async function POST(request){
 }
 
 //configuration of api
-export const config ={
-    api:{bodyparser:false}
-}
+// Removed deprecated Next.js API config; Next.js App Router handles body parsing.
