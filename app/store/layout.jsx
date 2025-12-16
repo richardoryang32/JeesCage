@@ -3,7 +3,7 @@ import {SignedIn, SignIn, SignedOut} from "@clerk/nextjs";
 
 export const metadata = {
     title: "JeesCage. - Store Dashboard",
-    description: "JeesCag. - Store Dashboard",
+    description: "JeesCage. - Store Dashboard",
 };
 
 export default function RootAdminLayout({ children }) {
